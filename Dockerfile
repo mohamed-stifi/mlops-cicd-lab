@@ -6,14 +6,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/ src/
-COPY tests/ tests/
+# COPY tests/ tests/  <-- In prod, we usually don't copy tests, but okay for lab.
 
-# 1. Build-Time Training: Train the model so it is baked into the image
-# (In advanced MLOps, we download from S3/MLflow, but this is best for starting)
-RUN python src/train.py
+# ❌ REMOVED: RUN python src/train.py
+# The model.joblib must be provided from the outside now!
 
-# 2. Expose the port (Documentation only)
 EXPOSE 8000
-
-# 3. Run the API Server
 CMD ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8000"]
