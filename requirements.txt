@@ -2,3 +2,5 @@ pandas
 pytest
 scikit-learn
 joblib
+fastapi
+uvicorn
