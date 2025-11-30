@@ -1,34 +1,44 @@
-name: CI Pipeline
+name: CI/CD Pipeline
 
-# Trigger: Run this pipeline when code is pushed to the main branch
 on:
   push:
     branches: ["main"]
-  pull_request:
-    branches: ["main"]
 
-# Job: The actual set of tasks
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest  # The robot is a Virtual Machine (VM) running Linux
-
+  # Job 1: The CI Part (Testing)
+  test:
+    runs-on: ubuntu-latest
     steps:
-    # 1. Check out the code from the repo onto the VM
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    # 2. Install Python 3.9 on the VM
+    - uses: actions/checkout@v3
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
-
-    # 3. Install dependencies
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-
-    # 4. Run the tests
     - name: Run Unit Tests
       run: pytest
+
+  # Job 2: The CD Part (Building & Delivering)
+  build-image:
+    needs: test  # <--- CRITICAL: Only run if 'test' passes!
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          # Change 'your-username' below to your actual Docker Hub username!
+          tags: ${{ secrets.DOCKER_USERNAME }}/mlops-cicd:latest
